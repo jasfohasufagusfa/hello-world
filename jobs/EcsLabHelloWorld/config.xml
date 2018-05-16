@@ -9,7 +9,7 @@
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
         <url>https://github.com/jasfohasufagusfa/hello-world.git</url>
-        <credentialsId>ecr:us-west-2:b6eb2e6c-f95e-43ec-9671-72cf9af62e19</credentialsId>
+        <credentialsId>ecr:eu-central-1:b6eb2e6c-f95e-43ec-9671-72cf9af62e19</credentialsId>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
@@ -34,13 +34,13 @@
   <builders>
     <hudson.tasks.Shell>
       <command>#!/bin/bash
-DOCKER_LOGIN=`aws ecr get-login --region us-west-2 | sed s&apos;/-e none//g&apos;`
+DOCKER_LOGIN=`aws ecr get-login --region eu-central-1 | sed s&apos;/-e none//g&apos;`
 ${DOCKER_LOGIN}</command>
     </hudson.tasks.Shell>
     <com.cloudbees.dockerpublish.DockerBuilder plugin="docker-build-publish@1.3.2">
       <server plugin="docker-commons@1.12"/>
       <registry plugin="docker-commons@1.12">
-        <url>https://410825274750.dkr.ecr.us-west-2.amazonaws.com/hello-world</url>
+        <url>https://410825274750.dkr.ecr.eu-central-1.amazonaws.com/hello-world</url>
       </registry>
       <repoName>hello-world</repoName>
       <noCache>false</noCache>
@@ -57,26 +57,26 @@ ${DOCKER_LOGIN}</command>
     <hudson.tasks.Shell>
       <command>#!/bin/bash
 #Constants
-REGION=us-west-2
-REPOSITORY_NAME=410825274750.dkr.ecr.us-west-2.amazonaws.com/hello-world
-CLUSTER=getting-started
+REGION=eu-central-1
+REPOSITORY_NAME=hello-world
+CLUSTER=ecslabinstanceprofile
 FAMILY=`sed -n &apos;s/.*&quot;family&quot;: &quot;\(.*\)&quot;,/\1/p&apos; taskdef.json`
 NAME=`sed -n &apos;s/.*&quot;name&quot;: &quot;\(.*\)&quot;,/\1/p&apos; taskdef.json`
 SERVICE_NAME=${NAME}-service
 #Store the repositoryUri as a variable
-REPOSITORY_URI=`aws ecr describe-repositories --repository-names ${REPOSITORY_NAME} --region ${REGION} | jq .repositories[].repositoryUri | tr -d &apos;&quot;&apos;`
+REPOSITORY_URI=`aws ecr describe-repositories --repository-names ${REPOSITORY_NAME} --region ${REGION} | jq &apos;.repositories[].repositoryUri&apos; | tr -d &apos;&quot;&apos;`
 #Replace the build number and respository URI placeholders with the constants above
 sed -e &quot;s;%BUILD_NUMBER%;${BUILD_NUMBER};g&quot; -e &quot;s;%REPOSITORY_URI%;${REPOSITORY_URI};g&quot; taskdef.json &gt; ${NAME}-v_${BUILD_NUMBER}.json
 #Register the task definition in the repository
 aws ecs register-task-definition --family ${FAMILY} --cli-input-json file://${WORKSPACE}/${NAME}-v_${BUILD_NUMBER}.json --region ${REGION}
-SERVICES=`aws ecs describe-services --services ${SERVICE_NAME} --cluster ${CLUSTER} --region ${REGION} | jq .failures[]`
+SERVICES=`aws ecs describe-services --services ${SERVICE_NAME} --cluster ${CLUSTER} --region ${REGION} | jq &apos;.failures[]&apos;`
 #Get latest revision
-REVISION=`aws ecs describe-task-definition --task-definition ${NAME} --region ${REGION} | jq .taskDefinition.revision`
+REVISION=`aws ecs describe-task-definition --task-definition ${NAME} --region ${REGION} | jq &apos;.taskDefinition.revision&apos;`
 
 #Create or update service
 if [ &quot;$SERVICES&quot; == &quot;&quot; ]; then
   echo &quot;entered existing service&quot;
-  DESIRED_COUNT=`aws ecs describe-services --services ${SERVICE_NAME} --cluster ${CLUSTER} --region ${REGION} | jq .services[].desiredCount`
+  DESIRED_COUNT=`aws ecs describe-services --services ${SERVICE_NAME} --cluster ${CLUSTER} --region ${REGION} | jq &apos;.services[].desiredCount&apos;`
   if [ ${DESIRED_COUNT} = &quot;0&quot; ]; then
     DESIRED_COUNT=&quot;1&quot;
   fi
